@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import { AuthProvider } from "@/context/AuthContext"; // 👈 Import AuthProvider
+import { AOSProvider } from '@/components/AOSProvider';
+import { ApolloProvider } from '@/lib/apollo-provider';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { Toaster } from "@/components/ui/sonner";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -22,12 +27,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>
+          <GoogleOAuthProvider clientId={googleClientId}>
+            <ApolloProvider>
+              <AOSProvider>{children}</AOSProvider>
+              <Toaster />
+            </ApolloProvider>
+          </GoogleOAuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );

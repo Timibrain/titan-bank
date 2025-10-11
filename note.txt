@@ -1,0 +1,2 @@
+command for creating folder
+// mkdir src/components/ui
