@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import FixedDeposit from '@/lib/models/FixedDeposit';
 
 import connectDB from '@/lib/db';
 import User from '@/lib/models/User';
@@ -26,6 +27,8 @@ const typeDefs = `#graphql
     name: String
     accountNumber: String
     balances: [Balance]
+    activeFixedDepositsCount: Int
+    activeTicketsCount: Int
   }
 
   type AuthPayload {
@@ -80,6 +83,8 @@ const typeDefs = `#graphql
     registerUser(name: String!, email: String!, password: String!): User
     login(email: String!, password: String!): AuthPayload
     signInWithGoogle(googleCode: String!): AuthPayload
+    applyFixedDeposit(plan: String!, currency: String!, amount: Float!): FixedDeposit
+    deposit(amount: Float!, currency: String!): User
     createTicket(subject: String!, message: String!): Ticket
     triggerTestNotification(message: String!): String
   }
@@ -99,7 +104,6 @@ const resolvers = {
             }
             return await User.findById(context.userId);
         },
-
         // --- NEW TRANSACTIONS RESOLVER ---
         myTransactions: async (_parent: any, _args: any, context: any) => {
             if (!context.userId) {
@@ -118,6 +122,17 @@ const resolvers = {
             return await Ticket.find(filter).sort({ updatedAt: -1 });
         },
     },
+
+    User: {
+        activeFixedDepositsCount: async (parent: any) => {
+            // parent is the user object, so we can get its ID
+            return await FixedDeposit.countDocuments({ userId: parent._id, status: 'ACTIVE' });
+        },
+        activeTicketsCount: async (parent: any) => {
+            return await Ticket.countDocuments({ userId: parent._id, status: 'ACTIVE' });
+        },
+    },
+
     Mutation: {
         registerUser: async (_parent: any, args: any) => {
             const existingUser = await User.findOne({ email: args.email });

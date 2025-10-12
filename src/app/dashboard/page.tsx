@@ -13,16 +13,17 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import AccountSummary from '@/components/dashboard/AccountSummary';
 import BalanceCard from '@/components/dashboard/BalanceCard';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 
 interface MeData {
     me: {
         id: string;
         name: string;
         accountNumber: string;
-        balances: {
-            currency: string;
-            amount: number;
-        }[];
+        balances: { currency: string; amount: number; }[];
+        activeFixedDepositsCount: number;
+        activeTicketsCount: number;
     };
 }
 
@@ -48,6 +49,8 @@ const ME_QUERY = gql`
         currency
         amount
       }
+      activeFixedDepositsCount
+      activeTicketsCount
     }
   }
 `;
@@ -97,22 +100,38 @@ const DashboardPage = () => {
     const { me: user } = meData;
     const transactions = transData?.myTransactions || [];
     return (
-        <DashboardLayout
-            sidebar={<Sidebar />}
-            header={<DashboardHeader />}
-        >
-            {/* Main Content */}
+        <DashboardLayout sidebar={<Sidebar />} header={<DashboardHeader />}>
             <div className="space-y-8">
                 <AccountSummary name={user.name} accountNumber={user.accountNumber} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    {user.balances?.map((balance: any) => (
+                    {user.balances?.map((balance) => (
                         <BalanceCard
                             key={balance.currency}
                             currency={balance.currency}
                             amount={balance.amount}
                         />
                     ))}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">Active Fixed Deposits</CardTitle>
+                            <Link href="/fixed-deposit/history" className="text-sm text-blue-600 hover:underline">+ View</Link>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{user.activeFixedDepositsCount}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">Active Tickets</CardTitle>
+                            <Link href="/support/active" className="text-sm text-blue-600 hover:underline">+ View</Link>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{user.activeTicketsCount}</div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <RecentTransactions transactions={transactions} />
