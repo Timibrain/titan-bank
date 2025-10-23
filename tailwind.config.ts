@@ -22,6 +22,7 @@ const config = {
             colors: {
                 'primary-blue': '#0A2540',
                 'accent-red': '#D91F4E',
+                'navbar-blue': '#1e2745',
 
                 // Default Shadcn colors
                 border: "hsl(var(--border))",

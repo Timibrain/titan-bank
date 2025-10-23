@@ -36,7 +36,7 @@ const PricingCard = ({ planName, rate, details, delay }: PricingCardProps) => {
                 </ul>
             </CardContent>
             <div className="p-6 pt-0">
-                <Button className="w-full bg-primary-blue hover:bg-blue-900 text-black hover:text-white">
+                <Button className="w-full bg-primary-blue bg-blue-900 text-white hover:text-white">
                     APPLY NOW
                 </Button>
             </div>

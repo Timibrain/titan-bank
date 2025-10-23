@@ -10,7 +10,7 @@ const stats = [
 
 const Stats = () => {
     return (
-        <section className="bg-primary py-16 text-white"> {/* This line is the fix */}
+        <section className="bg-primary py-16 text-white"> 
             <div className="container mx-auto px-4" data-aos="fade-up">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                     {stats.map((stat, index) => (

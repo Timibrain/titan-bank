@@ -1,26 +1,27 @@
 // src/app/dashboard/page.tsx
 "use client";
 
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import Sidebar from '@/components/dashboard/Sidebar';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-
-// We'll also import the auth protection logic
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import Sidebar from '@/components/dashboard/Sidebar';
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+
 const DashboardPage = () => {
-    const { user, token } = useAuth();
+    const { user, loading } = useAuth(); // 👈 Destructure 'loading', not 'token'
     const router = useRouter();
 
     useEffect(() => {
-        if (!token) {
+        // Wait for the auth state to finish loading before checking for a user
+        if (!loading && !user) {
             router.push('/auth/signup?view=login');
         }
-    }, [token, router]);
+    }, [user, loading, router]); // 👈 Depend on 'user' and 'loading'
 
-    if (!user) {
+    // Show a loading screen while the user state is being determined
+    if (loading || !user) {
         return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
     }
 
@@ -29,11 +30,9 @@ const DashboardPage = () => {
             sidebar={<Sidebar />}
             header={<DashboardHeader />}
         >
-            {/* Main Content Goes Here */}
             <div>
                 <h1 className="text-3xl font-bold text-primary-blue">Dashboard Overview</h1>
                 <p className="text-gray-600 mt-2">Welcome back, {user.name}!</p>
-                {/* We will add the balance cards and transaction table here next */}
             </div>
         </DashboardLayout>
     );

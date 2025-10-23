@@ -57,7 +57,7 @@ const DashboardHeader = () => {
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon">
-                            <Bell className="h-5 w-5" />
+                            <Bell className="h-5 w-5 " />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-80" align="end">
@@ -72,7 +72,7 @@ const DashboardHeader = () => {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
-                            <Globe className="h-5 w-5" />
+                            <Globe className="h-5 w-5 " />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -86,7 +86,7 @@ const DashboardHeader = () => {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                             <Avatar className="h-10 w-10">
-                                <AvatarFallback className="bg-primary-blue text-white font-bold">{initials}</AvatarFallback>
+                                <AvatarFallback className="bg-primary-blue   font-bold">{initials}</AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>

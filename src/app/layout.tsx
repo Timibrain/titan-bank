@@ -33,14 +33,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
           <GoogleOAuthProvider clientId={googleClientId}>
             <ApolloProvider>
+        <AuthProvider>
               <AOSProvider>{children}</AOSProvider>
               <Toaster />
+        </AuthProvider>
             </ApolloProvider>
           </GoogleOAuthProvider>
-        </AuthProvider>
       </body>
     </html>
   );

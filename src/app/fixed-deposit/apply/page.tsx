@@ -5,6 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { CheckCircle, UploadCloud } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -16,7 +20,29 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import Sidebar from '@/components/dashboard/Sidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 
-// Define the validation schema for the form
+// --- GraphQL Mutation Definition ---
+const APPLY_FIXED_DEPOSIT_MUTATION = gql`
+  mutation ApplyFixedDeposit($plan: String!, $currency: String!, $amount: Float!) {
+    applyFixedDeposit(plan: $plan, currency: $currency, amount: $amount) {
+      id
+      plan
+      depositAmount
+      status
+    }
+  }
+`;
+
+// --- TypeScript Interface for Response ---
+interface ApplyFdrData {
+    applyFixedDeposit: {
+        id: string;
+        plan: string;
+        depositAmount: number;
+        status: string;
+    };
+}
+
+// --- Zod Schema ---
 const formSchema = z.object({
     depositPlan: z.string().min(1, "Please select a deposit plan."),
     currency: z.string().min(1, "Please select a currency."),
@@ -24,27 +50,39 @@ const formSchema = z.object({
         message: "Amount must be a positive number.",
     }),
     remarks: z.string().optional(),
-    attachment: z.any().optional(), // File upload is a UI placeholder for now
+    // attachment: z.any().optional(), // File upload still placeholder
 });
 
 const ApplyFixedDepositPage = () => {
+    const router = useRouter();
+    const [applyFixedDeposit, { loading }] = useMutation<ApplyFdrData>(APPLY_FIXED_DEPOSIT_MUTATION);
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            depositPlan: "",
-            currency: "",
-            depositAmount: "",
-            remarks: "",
-        },
+        defaultValues: { depositPlan: "", currency: "", depositAmount: "", remarks: "" },
     });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        const submissionData = {
-            ...values,
-            amount: parseFloat(values.depositAmount),
-        };
-        console.log(submissionData);
-        alert("Form submitted! We will build the backend next.");
+    // --- Updated onSubmit Function ---
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        toast.loading("Submitting request...");
+        try {
+            const amount = parseFloat(values.depositAmount);
+            await applyFixedDeposit({
+                variables: {
+                    plan: values.depositPlan,
+                    currency: values.currency,
+                    amount: amount,
+                },
+                // Refetch queries to update dashboard counts and history table
+                refetchQueries: ['Me', 'MyFixedDeposits']
+            });
+            toast.success("Fixed deposit application submitted successfully!");
+            router.push('/fixed-deposit/history');
+        } catch (error: any) {
+            toast.error(`Submission failed: ${error.message}`);
+        } finally {
+            toast.dismiss(); // Dismiss loading toast
+        }
     }
 
     return (
@@ -59,7 +97,7 @@ const ApplyFixedDepositPage = () => {
                         <FormField control={form.control} name="depositPlan" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Deposit Plan *</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select disabled={loading} onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select One" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         <SelectItem value="starter">Starter Plan</SelectItem>
@@ -75,7 +113,7 @@ const ApplyFixedDepositPage = () => {
                             <FormField control={form.control} name="currency" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Currency *</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select disabled={loading} onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select One" /></SelectTrigger></FormControl>
                                         <SelectContent>
                                             <SelectItem value="USD">USD</SelectItem>
@@ -89,7 +127,7 @@ const ApplyFixedDepositPage = () => {
                             <FormField control={form.control} name="depositAmount" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Deposit Amount *</FormLabel>
-                                    <FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl>
+                                    <FormControl><Input disabled={loading} type="number" placeholder="0.00" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
@@ -98,22 +136,22 @@ const ApplyFixedDepositPage = () => {
                         <FormField control={form.control} name="remarks" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Remarks</FormLabel>
-                                <FormControl><Textarea placeholder="Optional" className="resize-none" {...field} /></FormControl>
+                                <FormControl><Textarea disabled={loading} placeholder="Optional" className="resize-none" {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )} />
 
                         <div>
                             <FormLabel htmlFor="attachment">Attachment</FormLabel>
-                            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md opacity-50"> {/* Added opacity */}
                                 <div className="space-y-1 text-center">
                                     <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-                                    <p className="text-sm text-gray-600">Drag and drop a file here or click</p>
+                                    <p className="text-sm text-gray-600">File upload not yet implemented</p>
                                 </div>
                             </div>
                         </div>
 
-                        <Button type="submit" className="w-full bg-primary-blue bg-blue-900 hover:bg-blue-800 text-white font-semibold text-lg py-6">
+                        <Button type="submit" disabled={loading} className="w-full bg-primary-blue hover:bg-blue-900 text-white font-semibold text-lg py-6">
                             <CheckCircle className="mr-2 h-5 w-5" /> Submit Request
                         </Button>
                     </form>

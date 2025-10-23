@@ -16,17 +16,6 @@ import RecentTransactions from '@/components/dashboard/RecentTransactions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
-interface MeData {
-    me: {
-        id: string;
-        name: string;
-        accountNumber: string;
-        balances: { currency: string; amount: number; }[];
-        activeFixedDepositsCount: number;
-        activeTicketsCount: number;
-    };
-}
-
 interface TransactionsData {
     myTransactions: {
         id: string;
@@ -38,23 +27,8 @@ interface TransactionsData {
         status: string;
     }[];
 }
-// GraphQL query to fetch the logged-in user's data
-const ME_QUERY = gql`
-  query Me {
-    me {
-      id
-      name
-      accountNumber
-      balances {
-        currency
-        amount
-      }
-      activeFixedDepositsCount
-      activeTicketsCount
-    }
-  }
-`;
 
+// We only need the Transactions query here now
 const TRANSACTIONS_QUERY = gql`
   query MyTransactions {
     myTransactions {
@@ -70,42 +44,40 @@ const TRANSACTIONS_QUERY = gql`
 `;
 
 const DashboardPage = () => {
-    const { token, loading: authLoading } = useAuth();
+    // Get user and authLoading directly from the context
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
 
-    const { data: meData, loading: meLoading, error: meError } = useQuery<MeData>(ME_QUERY, { skip: !token });
-    const { data: transData, loading: transLoading, error: transError } = useQuery<TransactionsData>(TRANSACTIONS_QUERY, { skip: !token });
+    // We still fetch transactions separately
+    const { data: transData, loading: transLoading, error: transError } = useQuery<TransactionsData>(TRANSACTIONS_QUERY, {
+        skip: !user,
+    });
 
     useEffect(() => {
-        if (!authLoading && !token) {
+        if (!authLoading && !user) {
             router.push('/auth/signup?view=login');
         }
-    }, [token, authLoading, router]);
+    }, [user, authLoading, router]);
 
-    const isLoading = authLoading || meLoading || transLoading;
+    const isLoading = authLoading || transLoading;
 
-    if (isLoading) {
+    if (isLoading || !user) {
         return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
     }
 
-    const error = meError || transError;
-    if (error) {
-        return <div className="flex items-center justify-center min-h-screen">Error: {error.message}</div>;
+    if (transError) {
+        return <div className="flex items-center justify-center min-h-screen">Error: {transError.message}</div>;
     }
 
-    if (!meData?.me) {
-        return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-    }
-
-    const { me: user } = meData;
     const transactions = transData?.myTransactions || [];
+
     return (
         <DashboardLayout sidebar={<Sidebar />} header={<DashboardHeader />}>
             <div className="space-y-8">
-                <AccountSummary name={user.name} accountNumber={user.accountNumber} />
+                <AccountSummary name={user.name} accountNumber={user.accountNumber!} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    {user.balances?.map((balance) => (
+                    {user.balances?.map((balance: any) => (
                         <BalanceCard
                             key={balance.currency}
                             currency={balance.currency}
@@ -113,6 +85,7 @@ const DashboardPage = () => {
                         />
                     ))}
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
